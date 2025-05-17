@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Country Info Lookup</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        input, button { margin: 10px; padding: 10px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h2>Country Info Lookup (SOAP API)</h2>
+    <input type="text" id="countryCode" placeholder="Enter Country Code (e.g., US)">
+    <button onclick="fetchCountryInfo()">Get Info</button>
+    <div id="result"></div>
+
+    <script>
+        function fetchCountryInfo() {
+            let countryCode = document.getElementById('countryCode').value.trim();
+            if (!countryCode) {
+                alert("Please enter a valid country code.");
+                return;
+            }
+
+            let soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+                <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                    <soap:Body>
+                        <CountryName xmlns="http://www.oorsprong.org/websamples.countryinfo">
+                            <sCountryISOCode>${countryCode}</sCountryISOCode>
+                        </CountryName>
+                    </soap:Body>
+                </soap:Envelope>`;
+
+            fetch("http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "text/xml; charset=utf-8",
+                    "SOAPAction": "http://www.oorsprong.org/websamples.countryinfo/CountryName"
+                },
+                body: soapRequest
+            })
+            .then(response => response.text())
+            .then(data => {
+                let parser = new DOMParser();
+                let xmlDoc = parser.parseFromString(data, "text/xml");
+                let result = xmlDoc.getElementsByTagName("m:CountryName")[0]?.textContent || "Not Found";
+                document.getElementById("result").innerHTML = `<h3>Country Name: ${result}</h3>`;
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html>
